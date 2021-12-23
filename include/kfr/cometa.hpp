@@ -107,9 +107,9 @@ constexpr size_t max_size_t = size_t(-1);
 template <typename... T>
 using common_type = typename std::common_type<T...>::type;
 
-#if __cplusplus >= 201703L
+#if __cpp_lib_is_invocable >= 201703L
 template <typename T, typename... Args>
-using invoke_result = typename std::invoke_result<T, Args...>::type;
+using invoke_result = typename std::invoke_result_t<T, Args...>;
 #else
 template <typename T, typename... Args>
 using invoke_result = typename std::result_of<T(Args...)>::type;
