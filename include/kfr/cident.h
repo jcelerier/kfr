@@ -7,7 +7,7 @@
 extern char* gets(char* __s);
 #endif
 
-#if defined(_M_IX86) || defined(__i386__) || defined(_M_X64) || defined(__x86_64__)
+#if defined(_M_IX86) || defined(__i386__) || defined(_M_X64) || defined(__x86_64__) || defined(__EMSCRIPTEN__)
 #define CMT_ARCH_X86 1
 #elif defined(__arm__) || defined(__arm64__) || defined(_M_ARM) || defined(__aarch64__)
 #define CMT_ARCH_ARM 1
@@ -25,7 +25,7 @@ extern char* gets(char* __s);
 #ifndef CMT_FORCE_GENERIC_CPU
 
 #if defined __AVX512F__ && !defined CMT_ARCH_AVX512
-#define CMT_ARCH_AVX512 1
+// #define CMT_ARCH_AVX512 1
 #define CMT_ARCH_AVX2 1
 #define CMT_ARCH_AVX 1
 #define CMT_ARCH_SSE4_2 1

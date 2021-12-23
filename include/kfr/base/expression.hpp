@@ -31,6 +31,7 @@
 #include "../simd/types.hpp"
 #include "../simd/vec.hpp"
 #include "shape.hpp"
+#include "../cometa.hpp"
 
 #include <tuple>
 #ifdef KFR_STD_COMPLEX

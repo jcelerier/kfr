@@ -83,6 +83,7 @@ option(KFR_EXTENDED_TESTS "Extended tests (up to hour)" OFF)
 option(KFR_SKIP_TESTS "Build tests but don't run tests" OFF)
 option(KFR_STD_COMPLEX "Use std::complex instead of custom complex type" OFF)
 option(KFR_ENABLE_CAPI_BUILD "Enable KFR C API building" OFF)
+option(KFR_ENABLE_INSTALL "Enable installation of targets" ON)
 mark_as_advanced(KFR_ENABLE_ASMTEST)
 mark_as_advanced(KFR_REGENERATE_TESTS)
 mark_as_advanced(KFR_DISABLE_CLANG_EXTENSIONS)
@@ -125,7 +126,7 @@ endif ()
 include(cmake/target_set_arch.cmake)
 
 add_library(use_arch INTERFACE)
-target_set_arch(use_arch INTERFACE ${KFR_ARCH})
+target_set_arch(use_arch INTERFACE "${KFR_ARCH}")
 
 if (WIN32)
     add_definitions(-D_CRT_SECURE_NO_WARNINGS)
@@ -153,17 +154,22 @@ endif ()
 
 # KFR library
 add_library(kfr INTERFACE)
-target_sources(kfr INTERFACE ${KFR_SRC})
-target_include_directories(kfr INTERFACE include)
+
+target_include_directories(kfr INTERFACE
+  $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/include>
+  $<INSTALL_INTERFACE:include>
+)
 target_compile_options(kfr INTERFACE "$<$<CONFIG:DEBUG>:-DKFR_DEBUG>")
 if (APPLE)
     target_compile_options(kfr INTERFACE -faligned-allocation)
 endif ()
 if (NOT IOS)
+  if(X86)
     if (NOT MSVC OR CLANG)
         target_compile_options(kfr
                                INTERFACE "${CLANG_ARG_PREFIX}-mstackrealign")
     endif ()
+  endif()
 endif ()
 if (MSVC)
     target_compile_options(kfr INTERFACE -bigobj -EHsc)
@@ -205,7 +211,9 @@ function (add_arch_library NAME ARCH SRCS DEFS)
     target_set_arch(${NAME}_${ARCH} PRIVATE ${ARCH})
     target_compile_options(${NAME}_${ARCH} PRIVATE ${DEFS})
     target_link_libraries(${NAME}_all INTERFACE ${NAME}_${ARCH})
-    target_compile_options(${NAME}_${ARCH} PRIVATE -flto)
+    if(NOT "${CMAKE_SHARED_LINKER_FLAGS}" MATCHES "fuse-ld=mold")
+      target_compile_options(${NAME}_${ARCH} PRIVATE -flto)
+    endif()
 endfunction ()
 
 if (KFR_ENABLE_DFT)
@@ -221,12 +229,14 @@ if (KFR_ENABLE_DFT)
             INTERFACE -DKFR_DFT_MULTI=1
                       -DCMT_MULTI=1
                       -DCMT_MULTI_ENABLED_SSE2=1
+                      -DCMT_MULTI_ENABLED_SSSE3=1
                       -DCMT_MULTI_ENABLED_SSE41=1
                       -DCMT_MULTI_ENABLED_AVX=1
                       -DCMT_MULTI_ENABLED_AVX2=1
                       -DCMT_MULTI_ENABLED_AVX512=1)
 
         add_arch_library(kfr_dft sse2 "${KFR_DFT_SRC}" "${KFR_DFT_DEFS}")
+        add_arch_library(kfr_dft ssse3 "${KFR_DFT_SRC}" "${KFR_DFT_DEFS}")
         add_arch_library(kfr_dft sse41 "${KFR_DFT_SRC}" "${KFR_DFT_DEFS}")
         add_arch_library(kfr_dft avx "${KFR_DFT_SRC}" "${KFR_DFT_DEFS}")
         add_arch_library(kfr_dft avx2 "${KFR_DFT_SRC}" "${KFR_DFT_DEFS}")
@@ -261,20 +271,6 @@ add_library(kfr_io ${KFR_IO_SRC})
 target_link_libraries(kfr_io kfr)
 target_link_libraries(kfr_io use_arch)
 
-install(
-    TARGETS kfr kfr_io
-    ARCHIVE DESTINATION lib
-    LIBRARY DESTINATION lib
-    RUNTIME DESTINATION bin)
-
-if (KFR_ENABLE_DFT AND KFR_ENABLE_CAPI_BUILD)
-    install(
-        TARGETS kfr_capi
-        ARCHIVE DESTINATION lib
-        LIBRARY DESTINATION lib
-        RUNTIME DESTINATION bin)
-endif ()
-
 set(kfr_defines)
 
 function (append_defines_from target)
@@ -299,39 +295,55 @@ set(kfr_defines "#define ${kfr_defines}\n")
 
 file(WRITE ${CMAKE_CURRENT_BINARY_DIR}/kfr_config.h "${kfr_defines}")
 
-if (KFR_ENABLE_DFT)
-    if (KFR_ENABLE_DFT_MULTIARCH)
-        install(
-            TARGETS kfr_dft_sse2 kfr_dft_sse41 kfr_dft_avx kfr_dft_avx2
-                    kfr_dft_avx512
-            ARCHIVE DESTINATION lib
-            LIBRARY DESTINATION lib
-            RUNTIME DESTINATION bin)
-    else ()
-        install(
-            TARGETS kfr_dft
-            ARCHIVE DESTINATION lib
-            LIBRARY DESTINATION lib
-            RUNTIME DESTINATION bin)
-    endif ()
-endif ()
+if (KFR_ENABLE_INSTALL)
+  install(
+      TARGETS kfr kfr_io use_arch
+      EXPORT kfr-exports
+      ARCHIVE DESTINATION lib
+      LIBRARY DESTINATION lib
+      RUNTIME DESTINATION bin)
 
-install(DIRECTORY include/kfr DESTINATION include)
+  if (KFR_ENABLE_CAPI_BUILD)
+      install(
+          TARGETS kfr_capi
+          EXPORT kfr-exports
+          ARCHIVE DESTINATION lib
+          LIBRARY DESTINATION lib
+          RUNTIME DESTINATION bin)
+  endif ()
 
-install(
-    FILES ${CMAKE_CURRENT_BINARY_DIR}/kfr_config.h
-    DESTINATION include/kfr
-    RENAME config.h)
+  install(
+      FILES ${CMAKE_CURRENT_BINARY_DIR}/kfr_config.h
+      DESTINATION include/kfr
+      RENAME config.h)
 
-# uninstall target
-if (NOT TARGET uninstall)
-    configure_file(
-        "${CMAKE_CURRENT_SOURCE_DIR}/cmake/cmake_uninstall.cmake.in"
-        "${CMAKE_CURRENT_BINARY_DIR}/cmake/cmake_uninstall.cmake" IMMEDIATE
-        @ONLY)
+  if (ENABLE_DFT)
+      if (ENABLE_DFT_MULTIARCH)
+          install(
+              TARGETS kfr_dft_sse2 kfr_dft_ssse3 kfr_dft_sse41 kfr_dft_avx kfr_dft_avx2
+                      kfr_dft_avx512 kfr_dft kfr_dft_all
+              EXPORT kfr-exports
+              ARCHIVE DESTINATION lib
+              LIBRARY DESTINATION lib
+              RUNTIME DESTINATION bin)
+      else ()
+          install(
+              TARGETS kfr_dft
+              EXPORT kfr-exports
+              ARCHIVE DESTINATION lib
+              LIBRARY DESTINATION lib
+              RUNTIME DESTINATION bin)
+      endif ()
+  endif ()
 
-    add_custom_target(
-        uninstall
-        COMMAND ${CMAKE_COMMAND} -P
-                ${CMAKE_CURRENT_BINARY_DIR}/cmake/cmake_uninstall.cmake)
+  install(DIRECTORY include/kfr DESTINATION include)
+
+  add_custom_target(
+      uninstall
+      COMMAND ${CMAKE_COMMAND} -P
+              ${CMAKE_CURRENT_BINARY_DIR}/cmake/cmake_uninstall.cmake)
+
+  install(EXPORT kfr-exports
+          DESTINATION lib/cmake/kfr)
+  export(EXPORT kfr-exports)
 endif ()
