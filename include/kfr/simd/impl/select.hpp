@@ -24,6 +24,9 @@
 
 #include "../operators.hpp"
 #include "function.hpp"
+#if __has_include(<bit>)
+#include <bit>
+#endif
 
 namespace kfr
 {
@@ -220,7 +223,7 @@ KFR_INTRINSIC vec<T, N> select(const vec<bit<T>, N>& a, const T& b, const vec<T,
 
 KFR_INTRINSIC f32neon select(const mf32neon& m, const f32neon& x, const f32neon& y)
 {
-    return vbslq_f32(m.v, x.v, y.v);
+    return vbslq_f32(std::bit_cast<uint32x4_t>(m.v), x.v, y.v);
 }
 KFR_INTRINSIC i8neon select(const mi8neon& m, const i8neon& x, const i8neon& y)
 {
