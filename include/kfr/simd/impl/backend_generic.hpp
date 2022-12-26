@@ -1493,6 +1493,7 @@ KFR_INTRINSIC simd<T, N> simd_from_halves(simd_t<T, N>, const simd<T, N / 2>& x,
     return { x, y };
 }
 
+#if defined(CMT_ARCH_SSE2)
 KFR_INTRINSIC simd<float, 4> simd_from_halves(simd_t<float, 4>, const simd<float, 2>& x,
                                               const simd<float, 2>& y)
 {
@@ -1507,6 +1508,7 @@ KFR_INTRINSIC simd<double, 2> simd_from_halves(simd_t<double, 2>, const simd<dou
 
 SIMD_TYPE_INTRIN(f32, 4, _mm_cvtss_f32(x), _mm_set_ss(x), _mm_set1_ps(x), _mm_setzero_ps())
 SIMD_TYPE_INTRIN(f64, 2, _mm_cvtsd_f64(x), _mm_set_sd(x), _mm_set1_pd(x), _mm_setzero_pd())
+#endif
 
 #ifdef CMT_ARCH_AVX
 SIMD_TYPE_INTRIN_EX(f32, 8, _mm256_cvtss_f32(x), _mm256_castps128_ps256(_mm_set_ss(x)), _mm256_set1_ps(x),
