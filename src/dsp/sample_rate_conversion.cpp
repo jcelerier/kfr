@@ -151,7 +151,7 @@ template struct samplerate_converter<complex<double>>;
 } // namespace impl
 } // namespace CMT_ARCH_NAME
 
-#ifdef CMT_MULTI_NEEDS_GATE
+#if 1
 
 template <typename T>
 samplerate_converter<T>::samplerate_converter(sample_rate_conversion_quality quality,

@@ -49,7 +49,7 @@ template expression_handle<double, 1> create_iir_filter<double>(const iir_params
 } // namespace impl
 } // namespace CMT_ARCH_NAME
 
-#ifdef CMT_MULTI_NEEDS_GATE
+#if 1
 
 template <typename T>
 iir_filter<T>::iir_filter(const iir_params<T>& params)

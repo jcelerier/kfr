@@ -233,7 +233,7 @@ template class convolve_filter<complex<double>>;
 
 } // namespace CMT_ARCH_NAME
 
-#ifdef CMT_MULTI_NEEDS_GATE
+#if 1
 namespace internal_generic
 {
 template <typename T>
