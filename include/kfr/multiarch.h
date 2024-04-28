@@ -159,7 +159,7 @@
     }
 #endif
 
-#if defined(CMT_BASE_ARCH) || !defined(CMT_MULTI)
+#if 1
 #define CMT_MULTI_NEEDS_GATE
 #else
 #endif
@@ -188,7 +188,7 @@
     __VA_ARGS__                                                                                              \
     }
 
-#if defined(CMT_BASE_ARCH) || !defined(CMT_MULTI)
+#if 1
 #define CMT_MULTI_NEEDS_GATE
 #else
 #endif

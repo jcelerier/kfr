@@ -68,7 +68,7 @@ template class fir_filter<double, complex<double>>;
 } // namespace impl
 } // namespace CMT_ARCH_NAME
 
-#ifdef CMT_MULTI_NEEDS_GATE
+#if 1
 
 template <typename T, typename U>
 void fir_filter<T, U>::process_buffer(U* dest, const U* src, size_t size)

@@ -133,7 +133,7 @@ CMT_MULTI_PROTO(namespace impl {
     void dft_initialize_transpose(internal_generic::fn_transpose<T> & transpose);
 })
 
-#ifdef CMT_MULTI_NEEDS_GATE
+#if 1
 
 namespace internal_generic
 {
