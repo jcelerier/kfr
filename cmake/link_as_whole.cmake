@@ -1,11 +1,14 @@
 
 function (link_as_whole TARGET TYPE LIBRARY)
+  if(CMAKE_VERSION VERSION_GREATER 3.24)
+    target_link_options(${TARGET} ${TYPE} "$<LINK_LIBRARY:WHOLE_ARCHIVE,${LIBRARY}>")
+  else()
     if (APPLE)
-        target_link_options(${TARGET} ${TYPE} "LINKER:-force_load,$<TARGET_FILE:${LIBRARY}>")
+      target_link_options(${TARGET} ${TYPE} "LINKER:-force_load,$<TARGET_FILE:${LIBRARY}>")
     elseif (MSVC)
-        target_link_options(${TARGET} ${TYPE}
-                            /WHOLEARCHIVE:$<TARGET_FILE:${LIBRARY}>)
+      target_link_options(${TARGET} ${TYPE} "/WHOLEARCHIVE:$<TARGET_FILE:${LIBRARY}>")
     else ()
-        target_link_options(${TARGET} ${TYPE} "LINKER:--push-state,--whole-archive,$<TARGET_FILE:${LIBRARY}>,--pop-state")
+      target_link_options(${TARGET} ${TYPE} "LINKER:--push-state,--whole-archive,$<TARGET_FILE:${LIBRARY}>,--pop-state")
     endif ()
+  endif ()
 endfunction ()
