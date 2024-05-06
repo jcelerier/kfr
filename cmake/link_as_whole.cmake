@@ -1,6 +1,6 @@
 
 function (link_as_whole TARGET TYPE LIBRARY)
-  if(CMAKE_VERSION VERSION_GREATER 3.24)
+  if(CMAKE_LINK_LIBRARY_USING_WHOLE_ARCHIVE_SUPPORTED)
     target_link_libraries(${TARGET} ${TYPE} "$<LINK_LIBRARY:WHOLE_ARCHIVE,${LIBRARY}>")
   else()
     if (APPLE)
